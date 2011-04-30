@@ -1,0 +1,15 @@
+JS Patterns
+
+En esta presentacion presentaremos algunos patrones en al ambito de JavaScript
+
+Se presentaran algunos patrones utiles conocidos y desconocidos llevados al mundo de JavaScript.
+
+Los patrones caen en las siguientes categorias:
+
+- Patrones Generales
+- Patrones de Creacion de Objetos
+- Patrones de Reutilizacion
+- Patrones de Diseno (a la GoF)
+
+
+Se intentara la implementacion de una pequena aplicacion como demo de algunos de los patrones.
