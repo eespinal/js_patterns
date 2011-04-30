@@ -15,7 +15,6 @@
 
 <ul>
   <li><a href="#functionsGeneral">Funciones</a></li>
-  <li><a href="#generalPatterns">Patrones Generales</a></li>
   <li><a href="#objectCreationPatterns">Patrones de Creaci&oacute;n de Objetos</a></li>
   <li><a href="#codeReusePatterns">Patrones de Reutilizaci&oacute;n</a></li>
   <li><a href="#designPatterns">Patrones de Dise&ntilde;o (GoF)</a></li>
@@ -213,104 +212,527 @@ var conf = {
 addElement(conf);
 </code></pre>
 
-<h2 id="generalPatterns">Patrones Generales</h2>
-<p>Jison can be installed for <a href="http://github.com/280north/narwhal">Narwhal</a> using its bundled <code>tusk</code> command or for <a href="http://nodejs.org/">Node</a> using <a href="http://github.com/isaacs/npm/"><code>npm</code></a></p>
-
-<p>Using npm:</p>
-
-<pre><code>npm install jison
-</code></pre>
-
-<p>Using tusk:</p>
-
-<pre><code>tusk install jison
-</code></pre>
-
 <h2 id="objectCreationPatterns">Patrones de Creaci&oacute;n de Objetos</h2>
+<h3>Patr&oacute;n de Namespace</h3>
 
-<p>Clone the github repository for examples:</p>
+<p>La utilizaci&oacute;n de "Namespaces" permite la reducci&oacute;n de variables globales dentro del c&oacute;digo, lo cual siempre es una buena idea para la eliminaci&oacute;n de colisiones.</p>
+<p>Consiste en crear un objeto dentro del cual se definan los elementos (constantes, variables y funciones) a utilizar.</p>
 
-<pre><code>git clone git://github.com/zaach/jison.git
-cd jison/examples
+<pre><code>// definition of the object
+
+// not recommended
+var APP = {};
+APP.utilities = {
+    ...
+};
+
+// recommended
+var APP = APP || {};
+APP.utilities = {
+    ...
+};
+
+</code></pre>
+<p>La segunda forma es recomendada para evitar redefinir por completo el namespace si ha sido definido anteriormente o en otro archivo.</p>
+
+<h3>Privacidad</h3>
+<p>No existe una construcci&oacute;n espec&iacute;fica del lenguaje para el concepto de miembro privado, pero con la ayuda de "closures" y funciones inmediatas es f&aacute;cilmente implementable.</p>
+
+<pre><code>var obj = (function(){
+    // private members
+    var name = "John";
+
+    // public
+    return {
+        getName: function() {
+            return name;
+        }
+    };
+}());
+
+// calling the public method will return private member value
+obj.getName(); // "John"
 </code></pre>
 
-<p>Now you’re ready to generate some parsers:</p>
+<h3>Module Pattern</h3>
+<p>Es un patr&oacute;n popular en JavaScritp porque permite estructurar y organizar el c&oacute;digo en JavaScript, que no posee una construcci&oacute;n sint&aacute;ctica para paquetes.</p>
 
-<pre><code>jison calculator.jison
+<pre><code>// namespace
+var APP = APP || {};
+APP.utilities.array = (function() {
+    // dependencies
+    var obj = APP.utilities.object,
+        ulang = APP.utilities.lang,
+
+    // private properties
+    array_string = "[object Array]",
+    ops = Object.prototype.toString;
+
+    // private methods
+    // ...
+
+    // optional initialization code (one time setup)
+    // ...
+
+    // public API
+    return {
+        inArray: function(needle, haystack) {
+            var i, haystackLength = haystack.length;
+
+            for (i = 0; haystackLength < haystackLength; i += 1) {
+                if (haystack[i] == needle) {
+                    return true;
+                }
+            }
+            return false;
+        },
+        isArray: function(arr) {
+            return ops.call(arr) === array_string;
+        }
+    };
+}());
 </code></pre>
+<p>Esta forma permite la organizaci&oacute;n del c&oacute;digo miestras crece.</p>
 
-<p>This will generate <code>calculator.js</code> in your current working directory. This script can be used to parse an input file, like so:</p>
+<h3>Revealing Module Pattern</h3>
+<p>Utilizando el esquema del "Module Pattern", define todos los miembros privados, y luego retorna en el API p&uacute;blico aquellos que se desean hacer p&uacute;blicos.</p>
 
-<pre><code>echo "2^32 / 1024" &gt; testcalc
-node calculator.js testcalc
-</code></pre>
+<pre><code>// namespace
+var APP = APP || {};
+APP.utilities.array = (function() {
+    // dependencies
+    var obj = APP.utilities.object,
+        ulang = APP.utilities.lang,
 
-<p>This will print out <code>4194304</code>.</p>
+    // private properties
+    array_string = "[object Array]",
+    ops = Object.prototype.toString,
 
-<h2 id="codeReusePatterns">Patrones de Reutilizaci&oacute;n</h2>
+    // private methods
+    inArray: function(needle, haystack) {
+        var i, haystackLength = haystack.length;
 
-<p>You can generate parsers programatically from JavaScript as well. Assuming Jison is in your commonjs environment’s load path:</p>
-
-<pre><code>// mygenerator.js
-var Parser = require("jison").Parser;
-
-var grammar = {
-    "lex": {
-        "rules": [
-           ["\\s+", "/* skip whitespace */"],
-           ["[a-f0-9]+", "return 'HEX';"]
-        ]
+        for (i = 0; haystackLength < haystackLength; i += 1) {
+            if (haystack[i] == needle) {
+                return true;
+            }
+        }
+        return false;
     },
+    isArray: function(arr) {
+        return ops.call(arr) === array_string;
+    };
 
-    "bnf": {
-        "hex_strings" :[ "hex_strings HEX",
-                         "HEX" ]
+    // public API
+    return {
+        inArray: inArray,
+        isArray: isArray
+    };
+}());
+</code></pre>
+
+<h3>Module Pattern con Constructor</h3>
+<p>Tambi&eacute;n basado en una variaci&oacute;n del "Module Pattern" original, permite crear constructores de manera que pueden llamarse con "new" para crear objetos independientes.</p>
+
+<pre><code>var APP = APP || {};
+APP.constructors.Person = (function() {
+    // dependencies
+    var arr = APP.utilities.array,
+        
+    // private properties and methods
+    say = function(msg) {
+        alert(msg);
+    },
+    Construct;
+
+    // optional one-time init procedures
+    // ...
+
+    // public API -- constructor
+    Construct = function(name, title) {
+        this.name = name;
+        this.title = title;
+    };
+    // public API -- prototype
+    Construct.prototype = {
+        constructor: APP.constructors.Person,
+        greet: function() {
+            var msg = "Hello, " + this.title + ". " + this.name;
+            say(msg);
+        }
+    };
+
+    // return the constructor to be assigned
+    return Construct;
+}());
+
+// get a new person object
+var amanda = APP.constructors.Person("Amanda", "Miss");
+var katy = APP.constructors.Person("Katy", "Mrs");
+
+</code></pre>
+
+<p>Al momento de querer construir un objeto solo es necesario llamar el constructor con new. Esta es una metodolog&iacute;a eficiente debido a que los m&eacute;todos privados solo se llaman una vez, y todos los m&eacute;todos p&uacute;blicos son compartidos por todos los objetos de este tipo porque han sido asignados al prototipo. Esto se puede llevar un poco m&aacute;s all&aacute;.</p>
+
+<h3>Miembros Est&aacute;ticos</h3>
+<p>Se pueden tener miembros est&aacute;ticos y que se compartan entre los diversos objetos que se creen con determinado constructor.</p>
+
+<pre><code>var Gadget = (function() {
+    // static variable to be shared between instances
+    var counter = 0,
+        Construct;
+
+    Construct = function() {
+        counter += 1;
+    };
+
+    // method of every Gadget object
+    Construct.prototype.getLastId = function() {
+        // reference to static variable
+        return counter;
+    };
+
+    return Construct;
+}());
+
+var xoom = new Gadget();
+xoom.getLastId(); // => 1
+
+var iphone = new Gadget();
+iphone.getLastId(); // => 2
+
+var droidX = new Gadget();
+droidX.getLastId(); // => 3
+
+</code></pre>
+
+<h3>Chaining Pattern</h3>
+<p>Permite hacer una cadena de llamadas en base a un mismo objeto. La metodolog&iacute;a consiste en retornar "this" cuando no se tiene ning&uacute;n valor importante para retornar.</p>
+
+<pre><code>var obj = {
+    value: 1,
+    increment: function() {
+        this.value += 1;
+        return this;
+    },
+    add: function(valueToAdd) {
+        this.value += valueToAdd;
+        return this;
+    },
+    get: function() {
+        return this.value;
     }
 };
 
-var parser = new Parser(grammar);
+// chain methods call
+obj.increment().add(10).get(); // => 12
+</code></pre>
 
-// generate source, ready to be written to disk
-var parserSource = parser.generate();
+<p>Interesante, aunque las cadenas largas de llamadas pueden ser confusas. Aunque jquery nos ha acostumbrado un poco</p>
 
-// you can also use the parser directly from memory
 
-parser.parse("adfe34bc e82a");
-// returns true
+<h2 id="codeReusePatterns">Patrones de Reutilizaci&oacute;n</h2>
 
-parser.parse("adfe34bc zxg");
-// throws lexical error
+<h3>Herencia por Prototipo</h3>
+
+<p>De acuerdo a este patr&oacute;n se podr&iacute;a heredar de otro objeto sus miembros</p>
+
+<pre><code>// definition of Person
+function Person() {
+    this.name = "Eddy";
+}
+
+Person.prototype.getName = function() {
+    return this.name;
+};
+
+var parent = new Person();
+parent.getName(); // => "Eddy"
+
+//inherit
+var child = inherit(parent);
+child.getName(); // => "Eddy"
+</code></pre>
+
+<p>La funci&oacute;n que logra la herencia es "inherit" que se puede definir de la siguiente manera</p>
+<pre><code>function inherit(o) {
+    function F() {}
+    F.prototype = o;
+    return new F();
+}
+</code></pre>
+
+<p>Tambi&eacute;n es posible heredar simplemente el prototipo del padre si no se desean todas las propiedades definidas.</p>
+
+<h3>M&eacute;todos Prestados</h3>
+<p>Cuando solamente se desean algunos m&eacute;todos de un objeto, se puede utilizar la forma de m&eactue;todos prestados.</p>
+
+<pre><code>
+</code></pre>// object from which methods are to be borrowed
+var greetings = {
+    name: "Eddy",
+    sayHelloInEnglish: function() {
+        alert("Hello, " + this.name);
+    },
+    sayHelloInSpanish: function() {
+        alert("Hola, " + this.name);
+    }
+};
+greetings.sayHelloInSpanish(); // => "Hola, Eddy"
+
+// object that is going to borrow
+var luisa = {
+    name: "Luisa"
+};
+greetings.sayHelloInSpanish.call(luisa); // => "Hola, Luisa"
 </code></pre>
 
 <h2 id="designPatterns">Patrones de Dise&ntilde;o</h2>
-<p>Once you have generated the parser and saved it, you no longer need Jison or any other dependencies.</p>
+<h3>Singleton</h3>
+<p>La idea de este patr&oacute;n es tener una sola instancia de una "clase". Si se crea un objeto llamando al mismo constructor, todas los objetos deben de apuntar al mismo. En JavaScript, dos objetos son iguales, si y solo si son el mismo objeto.</p>
 
-<p>As demonstrated before, the parser can be used from the command line:    </p>
+<pre><code>var obj1 = {
+    name: "abcd"
+};
 
-<pre><code>narwhal calculator.js testcalc
+var obj2 = {
+    name: "abcd"
+};
+
+obj1 == obj2; // => false
+obj1 === obj2; // => false
 </code></pre>
 
-<p>Though, more ideally, the parser will be a dependency of another module. You can require it from another module like so:</p>
+<p>Una forma de lograr esto es guardando una instancia del objeto en la primera llamada, y siempre devolviendo esa instancia en futuras llamadas con "new".</p>
 
-<pre><code>// mymodule.js
-var parser = require("./calculator").parser;
+<pre><code>function Sun() {
+    // is there an existing instance?
+    if (typeof Sun.instance === "object") {
+        return Sun.instance;
+    }
 
-function exec (input) {
-    return parser.parse(input);
+    // if not, proceed as normal
+    this.color: "yellow";
+    this.degrees: "pretty HOT";
+
+    // save instance
+    Sun.instance = this;
+
+    // implicit return of "this"
 }
 
-var twenty = exec("4 * 5");
+var sun = new Sun();
+var bigYelloBall = new Sun();
+sun === bigYelloBall; // => true
 </code></pre>
 
-<p>Or more succinctly:</p>
+<p>Se puede evitar que "instance" sea p&uacute;blico utilizando un "closure"</p>
 
-<pre><code>// mymodule.js
-function exec (input) {
-    return require("./calculator").parse(input);
+<pre><code>function Sun() {
+    // save the instance
+    var instance = this;
+
+    // if not, proceed as normal
+    this.color: "yellow";
+    this.degrees: "pretty HOT";
+
+    // rewrite the constructor
+    Sun = function() {
+        return instance;
+    };
 }
 
-var twenty = exec("4 * 5");
+// still as expected
+var sun = new Sun();
+var bigYelloBall = new Sun();
+sun === bigYelloBall; // => true
 </code></pre>
+
+<h3>Factory</h3>
+
+<p>Permite crear objetos de acuerdo a una estructura ya definida, todo resuelto por la clases "Factory" que se encarga de instanciarlos al ser requeridos.</p>
+
+<pre><code>// factory object constructor
+function CarMaker() {
+    // any initialization or setup
+}
+
+// method of the parent
+CarMaker.prototype.drive = function() {
+    return "Vroom, I have " + this.doors + " doors.";
+};
+
+// factory method
+CarMaker.factory = function(type) {
+    var constr = type,
+        newCar;
+
+    // check if constructor is defined for type given
+    if (typeof CarMaker[constr] !== "function") {
+        throw {
+            name: "Error",
+            message: constr + " doesn't exist!"
+        }
+    }
+
+    // let's assign the CarMaker methods to the constructed object
+    if (typeof CarMaker[constr].prototype !== "function") {
+        CarMaker[constr].prototype = new CarMaker();
+    }
+
+    // create the new instance
+    newCar = new CarMaker[constr]();
+
+    return newCar;
+};
+
+// define specific car makers
+CarMaker.Sedan = function() {
+    this.doors = 4;
+};
+
+CarMaker.Convertible = function() {
+    this.doors = 2;
+};
+
+CarMaker.SUV = function() {
+    this.doors = 6;
+};
+
+// with all defined, we can start making cars
+var corolla = CarMaker.factory("Sedan");
+corolla.drive(); // => Vroom,  I have 4  doors"
+var mx5 = CarMaker.factory("Convertible");
+mx5.drive(); // => Vroom,  I have 2 doors"
+var cherokee = CarMaker.factory("Sedan");
+cherokee.drive(); // => Vroom,  I have 6 doors"
+</code></pre>
+
+<h3>Iterator</h3>
+<p>La idea de este patr&oacute;n es tener una estructura de datos y poder iterar sobre ella, escondiendo la implemenci&oacute;n de como hacerlo, ya que para el cliente solo es relevante obtener la secuencia.</p>
+
+<pre><code>var aggregatedData = (function() {
+    var index = 0,
+        data = [1,2,3,4,5,6],
+        len = data.length;
+
+    return {
+        next: function() {
+            var element;
+            if (!this.hasNext()) {
+                return null;
+            }
+            element = data[index];
+            index += 2;
+            return element;
+        },
+        hasNext: function() {
+            return index < len;
+        },
+        current: function() {
+            return data[index];
+        },
+        reset: function() {
+            index = 0;
+        }
+    };
+}());
+
+// calling code example
+var element;
+while(aggregatedData.hasNext()) {
+    element = aggregatedData.current();
+    // do something with the element here
+    console.log(aggregatedData.next());
+}
+</code></pre>
+
+<h3>Strategy</h3>
+<p>Permite elegir algoritmos y un hilo de ejecuci&oacute;n de acuerdo a un valor de "runtime".</p>
+<p>Un ejemplo ser&iacute;a una forma de validaci&oacute;n donde se tienen diversos elementos y la forma de validar se realiza de acuerdo a una configuraci&oacute;n espec&iacute;ca de condiciones.</p>
+
+<pre><code>// validation configuration
+var validator.config = {
+    first_name: "isNonEmpty",
+    age: "isNumber",
+    password: "lengthIsSixOrMore"
+};
+
+// data to validate
+var data = {
+    first_name: "Lana",
+    age: "sixteen",
+    password: "bienvenid0"
+};
+// calling validation
+validator.validate(data);
+
+// say if there were errors
+if (validator.hasErrors()) {
+    // This would print the errors
+    console.log(validator.messages.join("\n"));
+}
+</code></pre>
+
+<p>Para implemetar la validaci&oacute;n de acuerdo a la interfaz descrita, se proceder&aacute; de la manera siguiente.</p>
+<pre><code>// defining the validator
+var validator = {
+    // validation functions
+    checkers = {},
+
+    // error messages
+    messages = [],
+
+    // validation config
+    config = {},
+
+    // check each value in data => key - value pairs
+    validate: function(data) {
+        var i, msg, type, checker, result_ok;
+
+        // reset messages
+        this.messages = [];
+        
+        $.each(data, function(key, value) {
+            checker = this.checkers[key];
+
+            result_ok = checker.validate(value);
+            if (!result_ok) {
+                this.messages.push(checker.instructions);
+            }
+        }
+        
+        return this.hasErrors();
+    },
+
+    hasErrors: function() {
+        return this.messages.length !== 0;
+    }
+};
+
+// each validator rule should be defined
+validator.checkers.isNonEmpty = {
+    validate: function(value) {
+        return value !== "";
+    },
+    instructions: "the value cannot be empty"
+};
+
+validator.checkers.isNumber = {
+    validate: function(value) {
+        return !isNaN(value);
+    },
+    instructions: "the value must be a number"
+};
+
+validator.checkers.lengthIsSixOrMore = {
+    validate: function(value) {
+        return (value.length >= 6);
+    },
+    instructions: "the value must be at least 6 characters"
+};
+</code></pre>
+
 
 <h2 id="demo">Demo</h2>
 
