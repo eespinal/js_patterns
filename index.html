@@ -6,7 +6,7 @@
 </head>
 <body>
     <div id="header">
-        <h1>JS Patterns</h1>
+        <h1>JavaScript Patterns</h1>
   	</div>
     <div id="content">
       <h1 id="documentation">Patrones de Dise&ntilde;o</h1>
@@ -18,7 +18,6 @@
   <li><a href="#objectCreationPatterns">Patrones de Creaci&oacute;n de Objetos</a></li>
   <li><a href="#codeReusePatterns">Patrones de Reutilizaci&oacute;n</a></li>
   <li><a href="#designPatterns">Patrones de Dise&ntilde;o (GoF)</a></li>
-  <li><a href="#sampleApp">Demo</a></li>
 </ul>
 
 <h2 id="functionsGeneral">Funciones</h2>
@@ -90,7 +89,7 @@ findNodes(hide);
 
 <h4>Map</h4>
 <pre><code>// Array to proccess
-var numbers = [1,2,3,4,5,6,7,8,9,10];
+var numbers = [1,2,3,4,5];
 // to multiply by 2 numbers in array;
 var double = function(element) {
     return 2 * element;
@@ -101,8 +100,8 @@ var increment = function(element) {
     return element + 1;
 };
 
-var doubledArray = numbers.map(double); // => [2,4,6,8,10,12,14,16,18,20]
-var incrementedArray = numbers.map(increment); // => [2,3,4,5,6,7,8,9,10,11];
+var doubledArray = numbers.map(double); // => [2,4,6,8,10];
+var incrementedArray = numbers.map(increment); // => [2,3,4,5,6];
 </code></pre>
 
 <h4>Reduce</h4>
@@ -196,11 +195,16 @@ var elements = (function() {
     var name, selector, cssClass;
 
     // default values are checked if undefined and set if necessary 
-    name = typeof configuration.name !== "undefined" ? configuration.name : "element";
-    selector = typeof configuration.selector !== "undefined" ? configuration.selector : "p";
-    cssClass = typeof configuration.cssClass !== "undefined" ? configuration.cssClass : "";
+    name = typeof configuration.name !== "undefined" ? 
+        configuration.name : 
+        "element";
+    selector = typeof configuration.selector !== "undefined" ? 
+        configuration.selector : "p";
+    cssClass = typeof configuration.cssClass !== "undefined" ? 
+        configuration.cssClass : "";
 
-    $("#container").append("<" + selector + " class=\"" + cssClass + "\">" + name + "</" + selector + ">");
+    $("#container")
+      .append("<" + selector + " class=\"" + cssClass + "\">" + name + "</" + selector + ">");
 };
 
 // definition of configuration object
@@ -733,384 +737,5 @@ validator.checkers.lengthIsSixOrMore = {
 };
 </code></pre>
 
-
-<h2 id="demo">Demo</h2>
-
-<p>The generated parser script may be included in a web page without any
- need for a CommonJS loading environment. It’s as simple as pointing to 
-it via a script tag:</p>
-
-<pre><code>&lt;script src="calculator.js"&gt;&lt;/script&gt;
-</code></pre>
-
-<p>When you generate the parser, you can specify the variable name it will be declared as:</p>
-
-<pre><code>// mygenerator.js
-var parserSource = generator.generate({moduleName: "calc"});
-// then write parserSource to a file called, say, calc.js
-</code></pre>
-
-<p>Whatever <code>moduleName</code> you specified will be the the variable you can access the parser from in your web page:</p>
-
-<pre><code>&lt;script src="calc.js"&gt;&lt;/script&gt;
-&lt;script&gt;
-  calc.parse("42 / 0");
-&lt;/script&gt;
-</code></pre>
-
-<p>The moduleName you specify can also include a namespace, e.g:</p>
-
-<pre><code>// mygenerator.js
-var parserSource = parser.generate({moduleName: "myCalculator.parser"});
-</code></pre>
-
-<p>And could be used like so:</p>
-
-<pre><code>&lt;script&gt;
-  var myCalculator = {};
-&lt;/script&gt;
-
-&lt;script src="calc.js"&gt;&lt;/script&gt;
-
-&lt;script&gt;
-  myCalculator.parser.parse("42 / 0");
-&lt;/script&gt;
-</code></pre>
-
-<p>Or something like that – you get the picture.</p>
-
-<p>A demo of the calculator script used in a web page is <a href="http://zaach.github.com/jison/demos/calc/">here</a>.</p>
-
-<h2 id="the-concepts-of-jison">The Concepts of Jison</h2>
-
-<p>Until the <a href="http://dinosaur.compilertools.net/bison/bison_4.html#SEC7">Bison guide</a>
- is properly ported for Jison, you can refer to it for the major 
-concepts, which are equivalent (except for the bits about static typing 
-of semantic values, and other obvious C artifacts.)</p>
-
-<p>Other helpful sections:</p>
-
-<ul>
-  <li><a href="http://dinosaur.compilertools.net/bison/bison_6.html#SEC34">Bison Grammar Files</a></li>
-  <li><a href="http://dinosaur.compilertools.net/bison/bison_8.html#SEC68">The Bison Parser Algorithm</a></li>
-  <li><a href="http://dinosaur.compilertools.net/bison/bison_9.html#SEC81">Error Recovery</a> (alpha support, at this point)</li>
-</ul>
-
-<h2 id="specifying-a-language">Specifying a Language</h2>
-<p>The process of parsing a language involves two phases: <strong>lexical analysis</strong> (tokenizing) and <strong>parsing</strong>,
- which the Lex/Yacc and Flex/Bison combinations are famous for. Jison 
-lets you specify a parser much like you would using Bison/Flex, with 
-separate files for tokenization rules and for the language grammar, or 
-with the tokenization rules embedded in the main grammar. </p>
-
-<p>For example, here is the grammar for the calculator parser:</p>
-
-<pre><code>/* description: Parses end executes mathematical expressions. */
-
-/* lexical grammar */
-%lex
-
-%%
-\s+                   /* skip whitespace */
-[0-9]+("."[0-9]+)?\b  return 'NUMBER';
-"*"                   return '*';
-"/"                   return '/';
-"-"                   return '-';
-"+"                   return '+';
-"^"                   return '^';
-"("                   return '(';
-")"                   return ')';
-"PI"                  return 'PI';
-"E"                   return 'E';
-&lt;&lt;EOF&gt;&gt;               return 'EOF';
-
-/lex
-
-/* operator associations and precedence */
-
-%left '+' '-'
-%left '*' '/'
-%left '^'
-%left UMINUS
-
-%start expressions
-
-%% /* language grammar */
-
-expressions
-    : e EOF
-        {print($1); return $1;}
-    ;
-
-e
-    : e '+' e
-        {$$ = $1+$3;}
-    | e '-' e
-        {$$ = $1-$3;}
-    | e '*' e
-        {$$ = $1*$3;}
-    | e '/' e
-        {$$ = $1/$3;}
-    | e '^' e
-        {$$ = Math.pow($1, $3);}
-    | '-' e %prec UMINUS
-        {$$ = -$2;}
-    | '(' e ')'
-        {$$ = $2;}
-    | NUMBER
-        {$$ = Number(yytext);}
-    | E
-        {$$ = Math.E;}
-    | PI
-        {$$ = Math.PI;}
-    ;
-</code></pre>
-
-<p>which compiles down to this JSON representation used directly by Jison:</p>
-
-<pre><code>{
-    "lex": {
-        "rules": [
-           ["\\s+",                    "/* skip whitespace */"],
-           ["[0-9]+(?:\\.[0-9]+)?\\b", "return 'NUMBER';"],
-           ["\\*",                     "return '*';"],
-           ["\\/",                     "return '/';"],
-           ["-",                       "return '-';"],
-           ["\\+",                     "return '+';"],
-           ["\\^",                     "return '^';"],
-           ["\\(",                     "return '(';"],
-           ["\\)",                     "return ')';"],
-           ["PI\\b",                   "return 'PI';"],
-           ["E\\b",                    "return 'E';"],
-           ["$",                       "return 'EOF';"]
-        ]
-    },
-
-    "operators": [
-        ["left", "+", "-"],
-        ["left", "*", "/"],
-        ["left", "^"],
-        ["left", "UMINUS"]
-    ],
-
-    "bnf": {
-        "expressions" :[[ "e EOF",   "print($1); return $1;"  ]],
-
-        "e" :[[ "e + e",   "$$ = $1 + $3;" ],
-              [ "e - e",   "$$ = $1 - $3;" ],
-              [ "e * e",   "$$ = $1 * $3;" ],
-              [ "e / e",   "$$ = $1 / $3;" ],
-              [ "e ^ e",   "$$ = Math.pow($1, $3);" ],
-              [ "- e",     "$$ = -$2;", {"prec": "UMINUS"} ],
-              [ "( e )",   "$$ = $2;" ],
-              [ "NUMBER",  "$$ = Number(yytext);" ],
-              [ "E",       "$$ = Math.E;" ],
-              [ "PI",      "$$ = Math.PI;" ]]
-    }
-}
-</code></pre>
-
-<p>Jison accepts both the Bison/Flex style format, or the raw JSON format, e.g:</p>
-
-<pre><code>narwhal bin/jison examples/calculator.jison
-</code></pre>
-
-<p>or</p>
-
-<pre><code>narwhal bin/jison examples/calculator.json
-</code></pre>
-
-<p>When the lexical grammar resides in its own (.jisonlex) file, use that as the second argument to Jison, e.g.:</p>
-
-<pre><code>narwhal bin/jison examples/classy.jison examples/classy.jisonlex
-</code></pre>
-
-<p>More examples can be found in the <a href="http://github.com/zaach/jison/tree/master/examples/"><code>examples/</code></a> and <a href="http://github.com/zaach/jison/tree/master/tests/parser/"><code>tests/parser/</code></a> directories.</p>
-
-<h2 id="lexical-analysis">Lexical Analysis</h2>
-<p>Jison includes a rather rudimentary scanner generator, though <strong>any module that supports the basic scanner API could be used</strong> in its place. </p>
-
-<p>The format of the <a href="http://dinosaur.compilertools.net/flex/flex_6.html#SEC6">input file</a> (including macro support) and the style of the <a href="http://dinosaur.compilertools.net/flex/flex_7.html#SEC7">pattern matchers</a>
- are modeled after Flex. It is a subset, so there are some differences, 
-namely exact string patterns must be placed in quotes e.g.:</p>
-
-<p>Bad:</p>
-
-<pre><code>[0-9]+zomg    print(yytext)
-</code></pre>
-
-<p>Good:</p>
-
-<pre><code>[0-9]+"zomg"    print(yytext);
-</code></pre>
-
-<p>Actions that span multiple lines should be surrounded by braces:</p>
-
-<pre><code>[0-9]+"zomg"    %{ print(yytext);
-                   return 'ZOMG'; %}
-</code></pre>
-
-<p>A recently added feature are <strong><a href="http://dinosaur.compilertools.net/flex/flex_11.html">start conditions</a></strong>,
- which allow certain rules to only match in certain states. If the lexer
- is not in that state, then the rule is ignored. The lexer starts in the
- <code>INITIAL</code> state, but can move to new states specified by 
-you. Read that link for the run-down. An example below shows where Jison
- differs, namely <code>this.begin('state')</code> instead of <code>BEGIN(STATE)</code> for changing states within an action:</p>
-
-<pre><code>%s expect
-
-%%
-expect-floats        this.begin('expect');
-
-&lt;expect&gt;[0-9]+"."[0-9]+      {
-            console.log( "found a float, = " + yytext );
-            }
-&lt;expect&gt;\n           %{
-            /* that's the end of the line, so
-             * we need another "expect-number"
-             * before we'll recognize any more
-             * numbers
-             */
-            this.begin('INITIAL');
-            %}
-
-[0-9]+      console.log( "found an integer, = " + yytext );
-
-"."         console.log( "found a dot" );
-</code></pre>
-
-<p>Additionaly, use <code>this.popState()</code> within an action to revert to the previous state.</p>
-
-<h2 id="tracking-locations">Tracking Locations</h2>
-
-<p>Jison’s lexical analyzer will track line number and column number 
-information for each token and make them available within parser 
-actions.
-The API is identical to <a href="http://www.gnu.org/software/bison/manual/html_node/Actions-and-Locations.html#Actions-and-Locations">Bison’s</a>.</p>
-
-<h2 id="custom-scanners">Custom Scanners</h2>
-
-<p>You don’t have to use the builtin Jison lexical scanner. An object with a <code>lex</code> and a <code>setInput</code> function would suffice, e.g.:</p>
-
-<pre><code>parser.lexer = {lex: function () { return 'NIL'; }, setInput: function (str) {} }
-</code></pre>
-
-<p>This lexer would simply return <code>NIL</code> tokens <em>ad infinitum</em>.</p>
-
-<p><em>TODO: more examples</em></p>
-
-<h2 id="sharing-scope">Sharing Scope</h2>
-
-<p>In Bison, code is expected to be lexically defined within the scope 
-of the semantic actions. E.g., chunks of code may be included in the 
-generated parser source, which are available from semantic actions.</p>
-
-<p>Jison is more modular. Instead of pulling code into the generated 
-module, the generated module is expected to be required and used by 
-other modules. This means that if you want to expose functionality to 
-the semantic actions, you can’t rely on it being available through 
-lexical scoping. Instead, the parser has a <code>yy</code> property which is exposed to actions as the <code>yy</code> free variable. Any functionality attached to this property is available in both lexical and semantic actions through the <code>yy</code> free variable.</p>
-
-<p>An example from orderly.js:</p>
-
-<pre><code>var parser = require("./orderly/parse").parser;
-
-// set parser's shared scope
-parser.yy = require("./orderly/scope");
-
-// returns the JSON object
-var parse = exports.parse = function (input) {
-    return parser.parse(input);
-};
-...
-</code></pre>
-
-<p>The <code>scope</code> module contains logic for building data structures, which is used within the semantic actions.</p>
-
-<p><em>TODO: More on this.</em></p>
-
-<h2 id="parsing-algorithms">Parsing algorithms</h2>
-<p>Like Bison, Jison can recognize languages described by LALR(1) 
-grammars, though it also has modes for LR(0), SLR(1), and LR(1). It also
- has a special mode for generating LL(1) parse tables (requested by my 
-professor,) and could be extended to generate a recursive descent parser
- for LL(k) languages in the future. But, for now, Jison is geared toward
- bottom-up parsing.</p>
-
-<p><em>*LR(1) mode is currently not practical for use with anything 
-other than toy grammars, but that is entirely a consequence of the 
-algorithm used, and may change in the future.</em></p>
-
-<h2 id="projects-using-jison">Projects using Jison</h2>
-
-<ul>
-  <li><a href="http://github.com/jashkenas/coffee-script">CoffeeScript</a></li>
-  <li><a href="https://github.com/wycats/handlebars.js">handlebars.js</a></li>
-  <li><a href="http://visop-dev.com/Project+jQuery.sheet">jQuery.sheet</a></li>
-  <li><a href="http://github.com/zaach/cafe">cafe</a></li>
-  <li><a href="http://github.com/zaach/jsonlint">jsonlint</a></li>
-  <li><a href="http://github.com/zaach/orderly.js">Orderly.js</a></li>
-</ul>
-
-<h2 id="contributors">Contributors</h2>
-
-<p>via <a href="http://github.com/zaach/jison/contributors">github</a></p>
-
-<h2 id="license">License</h2>
-
-<blockquote>
-  <p>Copyright (c) 2009 Zachary Carter</p>
-
-  <p>Permission is hereby granted, free of
-charge, to any person  obtaining a
-copy of this software and associated
-documentation  files (the “Software”),
-to deal in the Software without 
-restriction, including without
-limitation the rights to use,  copy,
-modify, merge, publish, distribute,
-sublicense, and/or sell  copies of the
-Software, and to permit persons to
-whom the  Software is furnished to do
-so, subject to the following 
-conditions:</p>
-
-  <p>The above copyright notice and this
-permission notice shall be  included
-in all copies or substantial portions
-of the Software.</p>
-
-  <p>THE SOFTWARE IS PROVIDED “AS IS”,
-WITHOUT WARRANTY OF ANY KIND,  EXPRESS
-OR IMPLIED, INCLUDING BUT NOT LIMITED
-TO THE WARRANTIES  OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND 
-NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT  HOLDERS BE
-LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY,  WHETHER IN AN ACTION OF
-CONTRACT, TORT OR OTHERWISE, ARISING 
-FROM, OUT OF OR IN CONNECTION WITH THE
-SOFTWARE OR THE USE OR  OTHER DEALINGS
-IN THE SOFTWARE.</p>
-</blockquote>
-
-
-    </div>
-  	<p id="footer">By <a href="http://zaa.ch/">Zach Carter</a>, 2010. MIT Licensed.</p>
-  	
-    <a href="http://github.com/zaach/jison"><img style="position: absolute; top: 0pt; right: 0pt; border: 0pt none;" src="Jison%20_%20Documentation_files/forkme_right_darkblue_121621.png" alt="Fork me on GitHub"></a>
-<script src="Jison%20_%20Documentation_files/ga.js" async="" type="text/javascript"></script><script type="text/javascript">
-  var _gaq = _gaq || [];
-  _gaq.push(['_setAccount', 'UA-3555129-4']);
-  _gaq.push(['_trackPageview']);
-
-  (function() {
-    var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
-    ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
-    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
-  })();
-</script>
-  
 
 </body></html>
